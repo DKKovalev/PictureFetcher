@@ -8,6 +8,15 @@ public class GalleryItem {
     private String id;
     private String Url;
 
+    public GalleryItem(String caption, String id, String url) {
+        this.caption = caption;
+        this.id = id;
+        Url = url;
+    }
+
+    public GalleryItem() {
+    }
+
     @Override
     public String toString() {
         return caption;

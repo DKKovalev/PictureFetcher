@@ -16,6 +16,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * Created by DKKovalev on 11.04.2016.
@@ -55,9 +57,9 @@ public class FlickrFetcher {
         return new String(getUrlInfo(urlSpec));
     }
 
-    public CustomArrayList<GalleryItem> fetchItems() {
+    public GalleryItem[] fetchItems() {
 
-        CustomArrayList<GalleryItem> items = new CustomArrayList<>(10);
+        GalleryItem[] items = new GalleryItem[100];
 
         try {
 
@@ -68,6 +70,8 @@ public class FlickrFetcher {
                     .appendQueryParameter("format", "json")
                     .appendQueryParameter("nojsoncallback", "1")
                     .appendQueryParameter("extras", "url_s")
+                    .appendQueryParameter("per_page", "100")
+                    .appendQueryParameter("page", "1")
                     .build().toString();
 
             String jsonString = getUrlString(url);
@@ -85,7 +89,7 @@ public class FlickrFetcher {
         return items;
     }
 
-    private void parseItems(CustomArrayList<GalleryItem> items, JSONObject jsonObject) throws IOException, JSONException {
+    private void parseItems(GalleryItem[] items, JSONObject jsonObject) throws IOException, JSONException {
 
         JSONObject photosJsonObject = jsonObject.getJSONObject("photos");
         JSONArray photoJsonArray = photosJsonObject.getJSONArray("photo");
@@ -97,13 +101,17 @@ public class FlickrFetcher {
             item.setId(photoJsonObject.getString("id"));
             item.setCaption(photoJsonObject.getString("title"));
 
-            if(!photoJsonObject.has("url_s")){
+            if (!photoJsonObject.has("url_s")) {
                 continue;
             }
 
             item.setUrl(photoJsonObject.getString("url_s"));
-            items.add(item);
-        }
 
+            if (i == items.length) {
+                items = Arrays.copyOf(items, items.length + 500);
+            }
+
+            items[i] = item;
+        }
     }
 }

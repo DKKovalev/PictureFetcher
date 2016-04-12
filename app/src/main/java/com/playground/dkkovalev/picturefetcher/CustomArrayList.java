@@ -2,6 +2,8 @@ package com.playground.dkkovalev.picturefetcher;
 
 import java.util.AbstractList;
 import java.util.Arrays;
+import java.util.ConcurrentModificationException;
+import java.util.NoSuchElementException;
 
 public class CustomArrayList<E> extends AbstractList<E> {
 
