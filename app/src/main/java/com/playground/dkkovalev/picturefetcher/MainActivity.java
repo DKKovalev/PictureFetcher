@@ -19,8 +19,19 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
+  /*
+  TODO Почитать про проблемы AsyncTask и способы отмены загрузки (метод cancel()).
+  Прочитать про AsyncTask подробнее.
+  Ограничить кол-во потоков (очередь задач, удобнее использовать executor), добавить управление последовательностью (LIFO).
+  Добавить кеширование на карту памяти
+  */
+
     private RecyclerView recyclerView;
     private CustomRecyclerAdapter customRecyclerAdapter;
+
+    private ContiniousScroller continiousScroller;
+
+    LinearLayoutManager linearLayoutManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,36 +41,58 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(MainActivity.this);
+        linearLayoutManager = new LinearLayoutManager(MainActivity.this);
         recyclerView = (RecyclerView) findViewById(R.id.rv_container);
         recyclerView.setLayoutManager(linearLayoutManager);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                new FlickrFetcherTask().execute();
-            }
-        });
+        new FlickrFetcherTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, 1);
     }
 
-    private class FlickrFetcherTask extends AsyncTask<Void, Void, GalleryItem[]> {
+    private class FlickrFetcherTask extends AsyncTask<Integer, Void, ArrayList<GalleryItem>> {
+
+        public ArrayList<GalleryItem> galleryItems;
 
         @Override
-        protected GalleryItem[] doInBackground(Void... params) {
+        protected ArrayList<GalleryItem> doInBackground(Integer... params) {
 
-            return new FlickrFetcher().fetchItems();
+            galleryItems = new FlickrFetcher().fetchItems(params[0]);
+
+            return galleryItems;
         }
 
         @Override
-        protected void onPostExecute(GalleryItem[] galleryItems) {
+        protected void onPostExecute(final ArrayList<GalleryItem> galleryItems) {
             super.onPostExecute(galleryItems);
 
             customRecyclerAdapter = new CustomRecyclerAdapter(galleryItems, MainActivity.this);
             recyclerView.setAdapter(customRecyclerAdapter);
-            customRecyclerAdapter.notifyDataSetChanged();
+
+            recyclerView.addOnScrollListener(new ContiniousScroller(linearLayoutManager) {
+                @Override
+                public void load(int page) {
+                    new MoreFetching().execute(page);
+                }
+            });
+        }
+
+        private class MoreFetching extends AsyncTask<Integer, Void, ArrayList<GalleryItem>> {
+
+            @Override
+            protected ArrayList<GalleryItem> doInBackground(Integer... params) {
+
+                return new FlickrFetcher().fetchItems(params[0]);
+            }
+
+            @Override
+            protected void onPostExecute(ArrayList<GalleryItem> galleryItems1) {
+                super.onPostExecute(galleryItems1);
+
+                galleryItems.addAll(galleryItems1);
+                customRecyclerAdapter.notifyItemRangeChanged(customRecyclerAdapter.getItemCount(), galleryItems.size() - 1);
+            }
         }
     }
+
 
     @Override
     protected void onDestroy() {

@@ -1,24 +1,31 @@
 package com.playground.dkkovalev.picturefetcher;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Handler;
+import android.os.Build;
+import android.os.Environment;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
+import android.util.LruCache;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 
 /**
  * Created by d.kovalev on 12.04.2016.
@@ -26,11 +33,13 @@ import java.net.URL;
 
 public class CustomRecyclerAdapter extends RecyclerView.Adapter<CustomRecyclerAdapter.CustomViewHolder> {
 
-    private GalleryItem[] galleryItems;
+    private LruCache<String, Bitmap> bitmapLruCache;
+
+    private ArrayList<GalleryItem> galleryItems;
 
     private Context context;
 
-    public CustomRecyclerAdapter(GalleryItem[] galleryItems, Context context) {
+    public CustomRecyclerAdapter(ArrayList<GalleryItem> galleryItems, Context context) {
         super();
         this.galleryItems = galleryItems;
         this.context = context;
@@ -48,14 +57,19 @@ public class CustomRecyclerAdapter extends RecyclerView.Adapter<CustomRecyclerAd
 
         //TODO Main fetching goes there
 
-        GalleryItem galleryItem = galleryItems[position];
+        GalleryItem galleryItem = galleryItems.get(position);
 
-        new ImageLoader(holder.photoView).execute(galleryItem.getUrl());
+        holder.photoView.setTag(galleryItem.getUrl());
+
+        holder.photoView.setImageResource(R.drawable.placeholder);
+
+        new ImageLoader(holder.photoView).
+                executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, galleryItem.getUrl());
     }
 
     @Override
     public int getItemCount() {
-        return galleryItems.length;
+        return galleryItems.size();
     }
 
     public class CustomViewHolder extends RecyclerView.ViewHolder {
@@ -67,18 +81,16 @@ public class CustomRecyclerAdapter extends RecyclerView.Adapter<CustomRecyclerAd
 
             photoView = (ImageView) itemView.findViewById(R.id.iv_photo);
         }
-
-        public void bindDrawable(Drawable drawable){
-            photoView.setImageDrawable(drawable);
-        }
     }
 
     private class ImageLoader extends AsyncTask<String, Void, Bitmap> {
 
-        ImageView photoView;
+        private WeakReference<ImageView> cache;
+
+        String savedUrl;
 
         public ImageLoader(ImageView photoView) {
-            this.photoView = photoView;
+            cache = new WeakReference<>(photoView);
         }
 
         @Override
@@ -89,6 +101,9 @@ public class CustomRecyclerAdapter extends RecyclerView.Adapter<CustomRecyclerAd
 
             try {
                 URL url = new URL(params[0]);
+
+                savedUrl = url.toString();
+
                 connection = (HttpURLConnection) url.openConnection();
 
                 InputStream inputStream = new BufferedInputStream(connection.getInputStream());
@@ -108,7 +123,28 @@ public class CustomRecyclerAdapter extends RecyclerView.Adapter<CustomRecyclerAd
         @Override
         protected void onPostExecute(Bitmap bitmap) {
             super.onPostExecute(bitmap);
-            photoView.setImageBitmap(bitmap);
+
+            if (cache != null) {
+
+                ImageView imageView = cache.get();
+
+                if (imageView != null) {
+                    if (bitmap != null) {
+                        if (imageView.getTag().toString().equals(savedUrl)) {
+
+                            imageView.setImageBitmap(bitmap);
+                        } else {
+
+                            Drawable drawable = imageView.getContext().getResources().getDrawable(R.drawable.placeholder);
+                            imageView.setImageDrawable(drawable);
+                        }
+                    }
+                }
+            }
+
+            /*if (photoView.getTag().toString().equals(savedUrl)) {
+                photoView.setImageBitmap(bitmap);
+            }*/
         }
     }
 }

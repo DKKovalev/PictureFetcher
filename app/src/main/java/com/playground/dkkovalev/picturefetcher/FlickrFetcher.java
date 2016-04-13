@@ -9,8 +9,6 @@ import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -57,9 +55,9 @@ public class FlickrFetcher {
         return new String(getUrlInfo(urlSpec));
     }
 
-    public GalleryItem[] fetchItems() {
+    public ArrayList<GalleryItem> fetchItems(int page) {
 
-        GalleryItem[] items = new GalleryItem[100];
+        ArrayList<GalleryItem> galleryItems = new ArrayList<>();
 
         try {
 
@@ -70,15 +68,15 @@ public class FlickrFetcher {
                     .appendQueryParameter("format", "json")
                     .appendQueryParameter("nojsoncallback", "1")
                     .appendQueryParameter("extras", "url_s")
-                    .appendQueryParameter("per_page", "100")
-                    .appendQueryParameter("page", "1")
+                    .appendQueryParameter("per_page", "15")
+                    .appendQueryParameter("page", String.valueOf(page))
                     .build().toString();
 
             String jsonString = getUrlString(url);
             Log.i(TAG, jsonString);
 
             JSONObject jsonObject = new JSONObject(jsonString);
-            parseItems(items, jsonObject);
+            parseItems(galleryItems, jsonObject);
 
         } catch (IOException e) {
 
@@ -86,10 +84,10 @@ public class FlickrFetcher {
             e.printStackTrace();
         }
 
-        return items;
+        return galleryItems;
     }
 
-    private void parseItems(GalleryItem[] items, JSONObject jsonObject) throws IOException, JSONException {
+    private void parseItems(ArrayList<GalleryItem> items, JSONObject jsonObject) throws IOException, JSONException {
 
         JSONObject photosJsonObject = jsonObject.getJSONObject("photos");
         JSONArray photoJsonArray = photosJsonObject.getJSONArray("photo");
@@ -107,11 +105,7 @@ public class FlickrFetcher {
 
             item.setUrl(photoJsonObject.getString("url_s"));
 
-            if (i == items.length) {
-                items = Arrays.copyOf(items, items.length + 500);
-            }
-
-            items[i] = item;
+            items.add(item);
         }
     }
 }
