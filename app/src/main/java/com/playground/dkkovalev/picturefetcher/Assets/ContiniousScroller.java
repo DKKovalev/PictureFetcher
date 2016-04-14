@@ -1,4 +1,4 @@
-package com.playground.dkkovalev.picturefetcher;
+package com.playground.dkkovalev.picturefetcher.Assets;
 
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.LinearLayoutManager;

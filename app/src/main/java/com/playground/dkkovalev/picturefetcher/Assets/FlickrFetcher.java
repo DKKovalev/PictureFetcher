@@ -1,7 +1,9 @@
-package com.playground.dkkovalev.picturefetcher;
+package com.playground.dkkovalev.picturefetcher.Assets;
 
 import android.net.Uri;
 import android.util.Log;
+
+import com.playground.dkkovalev.picturefetcher.Model.GalleryItem;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -15,7 +17,6 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 /**
  * Created by DKKovalev on 11.04.2016.
@@ -73,6 +74,8 @@ public class FlickrFetcher {
                     .build().toString();
 
             String jsonString = getUrlString(url);
+
+            Log.d(TAG, url);
             Log.i(TAG, jsonString);
 
             JSONObject jsonObject = new JSONObject(jsonString);

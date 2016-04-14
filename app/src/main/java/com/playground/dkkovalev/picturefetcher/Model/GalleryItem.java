@@ -1,4 +1,4 @@
-package com.playground.dkkovalev.picturefetcher;
+package com.playground.dkkovalev.picturefetcher.Model;
 
 /**
  * Created by DKKovalev on 11.04.2016.

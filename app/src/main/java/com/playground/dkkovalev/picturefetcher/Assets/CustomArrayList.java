@@ -1,4 +1,4 @@
-package com.playground.dkkovalev.picturefetcher;
+package com.playground.dkkovalev.picturefetcher.Assets;
 
 import java.util.AbstractList;
 import java.util.Arrays;
