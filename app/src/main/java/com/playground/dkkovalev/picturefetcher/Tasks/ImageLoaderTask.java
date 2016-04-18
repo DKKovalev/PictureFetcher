@@ -11,14 +11,12 @@ import com.playground.dkkovalev.picturefetcher.Assets.CacheingHandler;
 import com.playground.dkkovalev.picturefetcher.R;
 
 import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
 
 /**
  * Created by d.kovalev on 14.04.2016.
@@ -27,15 +25,11 @@ public class ImageLoaderTask extends AsyncTask<String, Void, Bitmap> {
 
     private WeakReference<ImageView> imageViewWeakReference;
     private String savedUrl;
-    private Context context;
 
     private CacheingHandler cacheingHandler;
 
-    public ImageLoaderTask(ImageView photoView, Context context) {
+    public ImageLoaderTask(ImageView photoView) {
         imageViewWeakReference = new WeakReference<>(photoView);
-
-        this.context = context;
-
         cacheingHandler = new CacheingHandler();
     }
 
@@ -72,9 +66,23 @@ public class ImageLoaderTask extends AsyncTask<String, Void, Bitmap> {
 
         Log.d("Downloaded bitmap ", bitmap.toString());
 
-        try {
+        cacheingHandler.addBitmapToLruCache(savedUrl, bitmap);
+        if (imageViewWeakReference != null) {
 
-            cacheingHandler.getTempFile(savedUrl, bitmap, context);
+            ImageView imageView = imageViewWeakReference.get();
+
+            if (imageView != null) {
+                if (bitmap != null) {
+                    if (imageView.getTag().toString().equals(savedUrl)) {
+                        imageView.setImageBitmap(bitmap);
+                    } else {
+                        imageView.setImageResource(R.drawable.placeholder);
+                    }
+                }
+            }
+
+        /*try {
+            cacheingHandler.saveTempFile(savedUrl, bitmap);
 
             if (imageViewWeakReference != null) {
 
@@ -92,6 +100,7 @@ public class ImageLoaderTask extends AsyncTask<String, Void, Bitmap> {
             }
         } catch (IOException e) {
             e.printStackTrace();
+        }*/
         }
     }
 }

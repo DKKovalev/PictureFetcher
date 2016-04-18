@@ -1,21 +1,22 @@
 package com.playground.dkkovalev.picturefetcher.Assets;
 
+import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
-import android.os.Environment;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
-import android.util.LruCache;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.ImageView;
 
-import com.playground.dkkovalev.picturefetcher.Model.GalleryItem;
+import com.playground.dkkovalev.picturefetcher.Model.FlickrPhotoObject;
 import com.playground.dkkovalev.picturefetcher.R;
 import com.playground.dkkovalev.picturefetcher.Tasks.ImageLoaderTask;
 
-import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -24,22 +25,20 @@ import java.util.ArrayList;
 
 public class CustomRecyclerAdapter extends RecyclerView.Adapter<CustomRecyclerAdapter.CustomViewHolder> {
 
-    private LruCache<String, Bitmap> bitmapLruCache;
-
-    private ArrayList<GalleryItem> galleryItems;
+    private static final String LOGTAG = "CustomAdapter TAG";
+    private ArrayList<FlickrPhotoObject> galleryItems;
+    private CacheingHandler cacheingHandler;
 
     private Context context;
 
-    private CacheingHandler cacheingHandler;
+    //private OnRecyclerItemClick onRecyclerItemClick;
 
-    private String path;
-
-    public CustomRecyclerAdapter(ArrayList<GalleryItem> galleryItems, Context context) {
+    public CustomRecyclerAdapter(Context context, ArrayList<FlickrPhotoObject> galleryItems) {
         super();
-        this.galleryItems = galleryItems;
+
         this.context = context;
+        this.galleryItems = galleryItems;
         cacheingHandler = new CacheingHandler();
-        path = Environment.getExternalStorageDirectory().getPath() + "PictureFetcher/25819066324_424b58b7e1_m.jpg";
     }
 
     @Override
@@ -54,37 +53,47 @@ public class CustomRecyclerAdapter extends RecyclerView.Adapter<CustomRecyclerAd
 
         //TODO Main fetching goes there
 
-        GalleryItem galleryItem = galleryItems.get(position);
+        FlickrPhotoObject galleryItem = galleryItems.get(position);
         holder.photoView.setTag(galleryItem.getUrl());
 
         holder.photoView.setImageResource(R.drawable.placeholder);
 
-        try {
+        Bitmap photo = cacheingHandler.loadBitmapFromLru(galleryItems.get(position).getUrl());
 
-            Bitmap bitmap = cacheingHandler.retrieveBitmapFromExternalStorage(path + galleryItem.getUrl(), holder.photoView);
-
-            if (bitmap != null) {
-                holder.photoView.setImageBitmap(bitmap);
-            } else {
-                new ImageLoaderTask(holder.photoView, context).
-                        executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, galleryItem.getUrl());
-            }
-        } catch (
-                IOException e
-                )
-
-        {
-            e.printStackTrace();
+        if (photo != null) {
+            holder.photoView.setImageBitmap(photo);
+        } else {
+            new ImageLoaderTask(holder.photoView).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, galleryItem.getUrl());
         }
+
+        /*try {
+                Bitmap bitmap = cacheingHandler.retrieveBitmapFromExternalStorage(fromPath.getAbsolutePath());
+                if (bitmap != null) {
+                    holder.photoView.setImageBitmap(bitmap);
+            }
+             else {
+                Log.i(LOGTAG, "List is empty");
+                //
+                    new ImageLoaderTask(holder.photoView, context).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, galleryItem.getUrl());
+            }
+            //
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (IndexOutOfBoundsException e) {
+            e.printStackTrace();
+        }*/
     }
+
+    /*public void setOnRecyclerItemClick(OnRecyclerItemClick onRecyclerItemClick) {
+        this.onRecyclerItemClick = onRecyclerItemClick;
+    }*/
 
     @Override
     public int getItemCount() {
         return galleryItems.size();
     }
 
-
-    public class CustomViewHolder extends RecyclerView.ViewHolder {
+    public class CustomViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
         private ImageView photoView;
 
@@ -92,6 +101,21 @@ public class CustomRecyclerAdapter extends RecyclerView.Adapter<CustomRecyclerAd
             super(itemView);
 
             photoView = (ImageView) itemView.findViewById(R.id.iv_photo);
+            itemView.setOnClickListener(this);
+        }
+
+        @Override
+        public void onClick(View v) {
+            int pos = getAdapterPosition();
+
+            Dialog dialog = new Dialog(context, android.R.style.Theme_Translucent_NoTitleBar_Fullscreen);
+            dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+            dialog.setCancelable(true);
+            dialog.setContentView(R.layout.dialog);
+            ImageView imageView = (ImageView)dialog.findViewById(R.id.iv_big_photo);
+            imageView.setTag(galleryItems.get(pos).getUrl());
+            new ImageLoaderTask(imageView).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, galleryItems.get(pos).getUrl());
+            dialog.show();
         }
     }
 }

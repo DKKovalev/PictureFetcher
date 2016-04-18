@@ -13,7 +13,10 @@ import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
+import android.widget.EditText;
 
+import com.playground.dkkovalev.picturefetcher.Assets.CustomRecyclerAdapter;
 import com.playground.dkkovalev.picturefetcher.Tasks.FlickrFetcherTask;
 
 import java.io.IOException;
@@ -23,7 +26,8 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
   /*
-  TODO Почитать про проблемы AsyncTask и способы отмены загрузки (метод cancel()).
+  TODO
+  Почитать про проблемы AsyncTask и способы отмены загрузки (метод cancel()).
   Прочитать про AsyncTask подробнее.
   Ограничить кол-во потоков (очередь задач, удобнее использовать executor), добавить управление последовательностью (LIFO).
   Добавить кеширование на карту памяти
@@ -32,6 +36,11 @@ public class MainActivity extends AppCompatActivity {
   */
 
     private RecyclerView recyclerView;
+    private EditText queryText;
+    private Button commitSearchBtn;
+
+    private LinearLayoutManager linearLayoutManager;
+    private int pos;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,13 +48,30 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        recyclerView = (RecyclerView) findViewById(R.id.rv_container);
+        setupUI();
 
-        new FlickrFetcherTask(MainActivity.this, recyclerView).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, 1);
+        new FlickrFetcherTask(MainActivity.this, recyclerView, linearLayoutManager, "flickr.photos.getRecent", "").executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, 1);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+    }
+
+    private void setupUI() {
+        recyclerView = (RecyclerView) findViewById(R.id.rv_container);
+
+        queryText = (EditText) findViewById(R.id.et_query);
+        commitSearchBtn = (Button) findViewById(R.id.btn_search);
+
+        linearLayoutManager = new LinearLayoutManager(MainActivity.this);
+        recyclerView.setLayoutManager(linearLayoutManager);
+
+        commitSearchBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new FlickrFetcherTask(MainActivity.this, recyclerView, linearLayoutManager, "flickr.photos.search", queryText.getText().toString()).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, 1);
+            }
+        });
     }
 }

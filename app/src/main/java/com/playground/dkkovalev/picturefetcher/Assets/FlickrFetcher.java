@@ -3,7 +3,7 @@ package com.playground.dkkovalev.picturefetcher.Assets;
 import android.net.Uri;
 import android.util.Log;
 
-import com.playground.dkkovalev.picturefetcher.Model.GalleryItem;
+import com.playground.dkkovalev.picturefetcher.Model.FlickrPhotoObject;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -56,15 +56,16 @@ public class FlickrFetcher {
         return new String(getUrlInfo(urlSpec));
     }
 
-    public ArrayList<GalleryItem> fetchItems(int page) {
+    public ArrayList<FlickrPhotoObject> fetchItems(int page, String method, String tags) {
 
-        ArrayList<GalleryItem> galleryItems = new ArrayList<>();
+        ArrayList<FlickrPhotoObject> recentPhotos = new ArrayList<>();
 
         try {
 
             String url = Uri.parse("https://api.flickr.com/services/rest/")
                     .buildUpon()
-                    .appendQueryParameter("method", "flickr.photos.getRecent")
+                    .appendQueryParameter("method", method)
+                    .appendQueryParameter("tags", tags)
                     .appendQueryParameter("api_key", API_KEY)
                     .appendQueryParameter("format", "json")
                     .appendQueryParameter("nojsoncallback", "1")
@@ -79,7 +80,7 @@ public class FlickrFetcher {
             Log.i(TAG, jsonString);
 
             JSONObject jsonObject = new JSONObject(jsonString);
-            parseItems(galleryItems, jsonObject);
+            parseItems(recentPhotos, jsonObject);
 
         } catch (IOException e) {
 
@@ -87,10 +88,10 @@ public class FlickrFetcher {
             e.printStackTrace();
         }
 
-        return galleryItems;
+        return recentPhotos;
     }
 
-    private void parseItems(ArrayList<GalleryItem> items, JSONObject jsonObject) throws IOException, JSONException {
+    private void parseItems(ArrayList<FlickrPhotoObject> items, JSONObject jsonObject) throws IOException, JSONException {
 
         JSONObject photosJsonObject = jsonObject.getJSONObject("photos");
         JSONArray photoJsonArray = photosJsonObject.getJSONArray("photo");
@@ -98,7 +99,7 @@ public class FlickrFetcher {
         for (int i = 0; i < photoJsonArray.length(); i++) {
             JSONObject photoJsonObject = photoJsonArray.getJSONObject(i);
 
-            GalleryItem item = new GalleryItem();
+            FlickrPhotoObject item = new FlickrPhotoObject();
             item.setId(photoJsonObject.getString("id"));
             item.setCaption(photoJsonObject.getString("title"));
 
@@ -106,7 +107,7 @@ public class FlickrFetcher {
                 continue;
             }
 
-            item.setUrl(photoJsonObject.getString("url_s"));
+            item.setUrl(photoJsonObject.getString("server"), photoJsonObject.getString("secret"));
 
             items.add(item);
         }

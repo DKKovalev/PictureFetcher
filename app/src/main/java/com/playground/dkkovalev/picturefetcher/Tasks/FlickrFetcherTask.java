@@ -4,48 +4,59 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SimpleItemAnimator;
+import android.util.Log;
 
 import com.playground.dkkovalev.picturefetcher.Assets.ContiniousScroller;
 import com.playground.dkkovalev.picturefetcher.Assets.CustomRecyclerAdapter;
 import com.playground.dkkovalev.picturefetcher.Assets.FlickrFetcher;
-import com.playground.dkkovalev.picturefetcher.Model.GalleryItem;
+import com.playground.dkkovalev.picturefetcher.MainActivity;
+import com.playground.dkkovalev.picturefetcher.Model.FlickrPhotoObject;
+
 
 import java.util.ArrayList;
 
 /**
  * Created by d.kovalev on 14.04.2016.
  */
-public class FlickrFetcherTask extends AsyncTask<Integer, Void, ArrayList<GalleryItem>> {
+public class FlickrFetcherTask extends AsyncTask<Integer, Void, ArrayList<FlickrPhotoObject>> {
 
-    private ArrayList<GalleryItem> galleryItems;
-    private Context context;
-    private LinearLayoutManager linearLayoutManager;
+    private ArrayList<FlickrPhotoObject> galleryItems;
     private RecyclerView recyclerView;
+    private LinearLayoutManager linearLayoutManager;
+    private Context context;
 
     private CustomRecyclerAdapter customRecyclerAdapter;
 
-    public FlickrFetcherTask(Context context, RecyclerView recyclerView) {
+    private String method;
+    private String tags;
+
+    public FlickrFetcherTask(Context context ,RecyclerView recyclerView, LinearLayoutManager linearLayoutManager, String method, String tags) {
         this.context = context;
         this.recyclerView = recyclerView;
-
-        linearLayoutManager = new LinearLayoutManager(context);
-        recyclerView.setLayoutManager(linearLayoutManager);
+        this.method = method;
+        this.tags = tags;
+        this.linearLayoutManager = linearLayoutManager;
     }
 
     @Override
-    protected ArrayList<GalleryItem> doInBackground(Integer... params) {
+    protected ArrayList<FlickrPhotoObject> doInBackground(Integer... params) {
 
-        galleryItems = new FlickrFetcher().fetchItems(params[0]);
+        galleryItems = new FlickrFetcher().fetchItems(params[0], method, tags);
 
         return galleryItems;
     }
 
     @Override
-    protected void onPostExecute(final ArrayList<GalleryItem> galleryItems) {
+    protected void onPostExecute(ArrayList<FlickrPhotoObject> galleryItems) {
         super.onPostExecute(galleryItems);
 
-        customRecyclerAdapter = new CustomRecyclerAdapter(galleryItems, context);
+
+        customRecyclerAdapter = new CustomRecyclerAdapter(context, galleryItems);
+
         recyclerView.setAdapter(customRecyclerAdapter);
+
+        customRecyclerAdapter.notifyDataSetChanged();
 
         recyclerView.addOnScrollListener(new ContiniousScroller(linearLayoutManager) {
             @Override
@@ -55,16 +66,16 @@ public class FlickrFetcherTask extends AsyncTask<Integer, Void, ArrayList<Galler
         });
     }
 
-    private class MoreFetching extends AsyncTask<Integer, Void, ArrayList<GalleryItem>> {
+    private class MoreFetching extends AsyncTask<Integer, Void, ArrayList<FlickrPhotoObject>> {
 
         @Override
-        protected ArrayList<GalleryItem> doInBackground(Integer... params) {
+        protected ArrayList<FlickrPhotoObject> doInBackground(Integer... params) {
 
-            return new FlickrFetcher().fetchItems(params[0]);
+            return new FlickrFetcher().fetchItems(params[0], method, tags);
         }
 
         @Override
-        protected void onPostExecute(ArrayList<GalleryItem> galleryItems1) {
+        protected void onPostExecute(ArrayList<FlickrPhotoObject> galleryItems1) {
             super.onPostExecute(galleryItems1);
 
             galleryItems.addAll(galleryItems1);
