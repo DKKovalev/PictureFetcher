@@ -10,6 +10,7 @@ import android.util.Log;
 import com.playground.dkkovalev.picturefetcher.Assets.ContiniousScroller;
 import com.playground.dkkovalev.picturefetcher.Assets.CustomRecyclerAdapter;
 import com.playground.dkkovalev.picturefetcher.Assets.FlickrFetcher;
+import com.playground.dkkovalev.picturefetcher.Fragments.MainFragment;
 import com.playground.dkkovalev.picturefetcher.MainActivity;
 import com.playground.dkkovalev.picturefetcher.Model.FlickrPhotoObject;
 
@@ -31,12 +32,21 @@ public class FlickrFetcherTask extends AsyncTask<Integer, Void, ArrayList<Flickr
     private String method;
     private String tags;
 
-    public FlickrFetcherTask(Context context ,RecyclerView recyclerView, LinearLayoutManager linearLayoutManager, String method, String tags) {
+    private AsyncCallback asyncCallback;
+
+    private CustomRecyclerAdapter.OnItemClickedListener onItemClickedListener;
+
+    public FlickrFetcherTask(Context context, RecyclerView recyclerView, LinearLayoutManager linearLayoutManager, String method, String tags, CustomRecyclerAdapter.OnItemClickedListener onItemClickedListener) {
         this.context = context;
         this.recyclerView = recyclerView;
         this.method = method;
         this.tags = tags;
         this.linearLayoutManager = linearLayoutManager;
+        this.onItemClickedListener = onItemClickedListener;
+    }
+
+    public void setAsyncCallback(AsyncCallback asyncCallback) {
+        this.asyncCallback = asyncCallback;
     }
 
     @Override
@@ -52,9 +62,14 @@ public class FlickrFetcherTask extends AsyncTask<Integer, Void, ArrayList<Flickr
         super.onPostExecute(galleryItems);
 
 
+
         customRecyclerAdapter = new CustomRecyclerAdapter(context, galleryItems);
 
+        asyncCallback.onDownloadComplete(galleryItems);
+
         recyclerView.setAdapter(customRecyclerAdapter);
+
+        customRecyclerAdapter.setOnItemClickListener(onItemClickedListener);
 
         customRecyclerAdapter.notifyDataSetChanged();
 
@@ -81,5 +96,9 @@ public class FlickrFetcherTask extends AsyncTask<Integer, Void, ArrayList<Flickr
             galleryItems.addAll(galleryItems1);
             customRecyclerAdapter.notifyItemRangeChanged(customRecyclerAdapter.getItemCount(), galleryItems.size() - 1);
         }
+    }
+
+    public interface AsyncCallback{
+        void onDownloadComplete(ArrayList<FlickrPhotoObject> flickrPhotoObjects);
     }
 }

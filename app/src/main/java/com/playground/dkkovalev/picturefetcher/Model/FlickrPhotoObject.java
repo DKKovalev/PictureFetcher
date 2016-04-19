@@ -1,9 +1,11 @@
 package com.playground.dkkovalev.picturefetcher.Model;
 
+import java.io.Serializable;
+
 /**
  * Created by DKKovalev on 11.04.2016.
  */
-public class FlickrPhotoObject {
+public class FlickrPhotoObject implements Serializable {
     private String caption;
     private String id;
     private String url;

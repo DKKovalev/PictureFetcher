@@ -1,7 +1,10 @@
 package com.playground.dkkovalev.picturefetcher.Assets;
 
 import android.app.Dialog;
+import android.app.Fragment;
+import android.app.FragmentManager;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.support.v7.app.AlertDialog;
@@ -28,6 +31,8 @@ public class CustomRecyclerAdapter extends RecyclerView.Adapter<CustomRecyclerAd
     private static final String LOGTAG = "CustomAdapter TAG";
     private ArrayList<FlickrPhotoObject> galleryItems;
     private CacheingHandler cacheingHandler;
+
+    private OnItemClickedListener onItemClickListener;
 
     private Context context;
 
@@ -93,6 +98,10 @@ public class CustomRecyclerAdapter extends RecyclerView.Adapter<CustomRecyclerAd
         return galleryItems.size();
     }
 
+    public void setOnItemClickListener(OnItemClickedListener onItemClickListener) {
+        this.onItemClickListener = onItemClickListener;
+    }
+
     public class CustomViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
         private ImageView photoView;
@@ -106,7 +115,7 @@ public class CustomRecyclerAdapter extends RecyclerView.Adapter<CustomRecyclerAd
 
         @Override
         public void onClick(View v) {
-            int pos = getAdapterPosition();
+            /*int pos = getAdapterPosition();
 
             Dialog dialog = new Dialog(context, android.R.style.Theme_Translucent_NoTitleBar_Fullscreen);
             dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -115,7 +124,17 @@ public class CustomRecyclerAdapter extends RecyclerView.Adapter<CustomRecyclerAd
             ImageView imageView = (ImageView)dialog.findViewById(R.id.iv_big_photo);
             imageView.setTag(galleryItems.get(pos).getUrl());
             new ImageLoaderTask(imageView).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, galleryItems.get(pos).getUrl());
-            dialog.show();
+            dialog.show();*/
+
+
+            if (onItemClickListener != null) {
+                onItemClickListener.onClick(v, getAdapterPosition());
+            }
+
         }
+    }
+
+    public interface OnItemClickedListener {
+        void onClick(View view, int pos);
     }
 }
