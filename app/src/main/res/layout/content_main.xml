@@ -13,5 +13,4 @@
     tools:context="com.playground.dkkovalev.picturefetcher.MainActivity"
     tools:showIn="@layout/activity_main">
 
-
 </FrameLayout>

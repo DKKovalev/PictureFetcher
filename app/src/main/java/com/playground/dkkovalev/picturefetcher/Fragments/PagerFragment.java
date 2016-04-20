@@ -1,13 +1,13 @@
 package com.playground.dkkovalev.picturefetcher.Fragments;
 
-import android.app.Fragment;
-
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
 import com.playground.dkkovalev.picturefetcher.Assets.ViewPagerAdapter;
 import com.playground.dkkovalev.picturefetcher.Model.FlickrPhotoObject;
 import com.playground.dkkovalev.picturefetcher.R;
@@ -15,6 +15,7 @@ import com.playground.dkkovalev.picturefetcher.R;
 import java.util.ArrayList;
 
 public class PagerFragment extends Fragment {
+    private static final String SAVED_INT = "current_position";
     private ViewPager viewPager;
 
     private ArrayList<FlickrPhotoObject> photos;
@@ -28,8 +29,12 @@ public class PagerFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        setRetainInstance(true);
+
         photos = (ArrayList<FlickrPhotoObject>) getArguments().getSerializable("photos");
+
         position = getArguments().getInt("position");
+
     }
 
     @Override
@@ -45,5 +50,14 @@ public class PagerFragment extends Fragment {
         viewPagerAdapter.notifyDataSetChanged();
 
         return view;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        if (viewPager != null) {
+            outState.putInt(SAVED_INT, viewPager.getCurrentItem());
+        }
     }
 }

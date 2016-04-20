@@ -1,8 +1,9 @@
 package com.playground.dkkovalev.picturefetcher.Fragments;
 
-import android.app.Fragment;
+import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -21,6 +22,9 @@ import java.util.ArrayList;
 
 public class MainFragment extends Fragment implements CustomRecyclerAdapter.OnItemClickedListener {
 
+    private static final String SAVED_LIST_KEY = "photos";
+    private static final String SAVED_FRAGMENT_TAG = "PAGER_FRAGMENT";
+
     private RecyclerView recyclerView;
     private EditText queryText;
     private Button commitSearchBtn;
@@ -28,6 +32,8 @@ public class MainFragment extends Fragment implements CustomRecyclerAdapter.OnIt
     private LinearLayoutManager linearLayoutManager;
 
     private ArrayList<FlickrPhotoObject> flickrPhotoObjects;
+
+    private Fragment pagerFragment;
 
     public MainFragment() {
     }
@@ -50,34 +56,36 @@ public class MainFragment extends Fragment implements CustomRecyclerAdapter.OnIt
         View view = inflater.inflate(R.layout.fragment_main, container, false);
         setupUI(view);
 
-        final FlickrFetcherTask flickrFetcherTask = new FlickrFetcherTask(
-                getActivity()
-                , recyclerView
-                , linearLayoutManager
-                , "flickr.photos.getRecent"
-                , ""
-                , MainFragment.this);
-        flickrFetcherTask.setAsyncCallback(new FlickrFetcherTask.AsyncCallback() {
-            @Override
-            public void onDownloadComplete(ArrayList<FlickrPhotoObject> flickrPhotoObjects) {
-                setFlickrPhotoObjects(flickrPhotoObjects);
-            }
-        });
-        flickrFetcherTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, 1);
+        if (savedInstanceState != null) {
+
+            flickrPhotoObjects = (ArrayList<FlickrPhotoObject>) savedInstanceState.getSerializable(SAVED_LIST_KEY);
+            CustomRecyclerAdapter customRecyclerAdapter = new CustomRecyclerAdapter(getActivity(), flickrPhotoObjects);
+            recyclerView.setAdapter(customRecyclerAdapter);
+            customRecyclerAdapter.setOnItemClickListener(MainFragment.this);
+            setupFlickrFetcherTask("flickr.photos.getRecent", "");
+
+        } else {
+            setupFlickrFetcherTask("flickr.photos.getRecent", "");
+        }
+
         return view;
     }
 
     @Override
     public void onClick(View view, int pos) {
 
-        PagerFragment pagerFragment = new PagerFragment();
+        pagerFragment = new PagerFragment();
 
         Bundle bundle = new Bundle();
         bundle.putSerializable("photos", flickrPhotoObjects);
         bundle.putInt("position", pos);
         pagerFragment.setArguments(bundle);
 
-        this.getFragmentManager().beginTransaction().replace(R.id.fragment_container, pagerFragment).addToBackStack(null).commit();
+        this.getFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragment_container, pagerFragment, SAVED_FRAGMENT_TAG)
+                .addToBackStack(SAVED_FRAGMENT_TAG)
+                .commit();
 
         Log.i("LOIJF", String.valueOf(pos));
     }
@@ -93,23 +101,41 @@ public class MainFragment extends Fragment implements CustomRecyclerAdapter.OnIt
         commitSearchBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-
-                final FlickrFetcherTask flickrFetcherTask = new FlickrFetcherTask(
-                        getActivity()
-                        , recyclerView
-                        , linearLayoutManager
-                        , "flickr.photos.search"
-                        , queryText.getText().toString()
-                        , MainFragment.this);
-                flickrFetcherTask.setAsyncCallback(new FlickrFetcherTask.AsyncCallback() {
-                    @Override
-                    public void onDownloadComplete(ArrayList<FlickrPhotoObject> flickrPhotoObjects) {
-                        setFlickrPhotoObjects(flickrPhotoObjects);
-                    }
-                });
-                flickrFetcherTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, 1);
+                setupFlickrFetcherTask("flickr.photos.search", queryText.getText().toString());
             }
         });
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putSerializable(SAVED_LIST_KEY, flickrPhotoObjects);
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+    }
+
+    private void setupFlickrFetcherTask(String method, String parameters) {
+        final FlickrFetcherTask flickrFetcherTask = new FlickrFetcherTask(
+                getActivity()
+                , recyclerView
+                , linearLayoutManager
+                , method
+                , parameters
+                , MainFragment.this);
+        flickrFetcherTask.setAsyncCallback(new FlickrFetcherTask.AsyncCallback() {
+            @Override
+            public void onDownloadComplete(ArrayList<FlickrPhotoObject> flickrPhotoObjects) {
+                setFlickrPhotoObjects(flickrPhotoObjects);
+            }
+        });
+        flickrFetcherTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, 1);
     }
 }
