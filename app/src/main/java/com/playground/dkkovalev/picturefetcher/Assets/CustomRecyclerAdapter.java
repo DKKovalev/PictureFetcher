@@ -29,19 +29,25 @@ import java.util.ArrayList;
 public class CustomRecyclerAdapter extends RecyclerView.Adapter<CustomRecyclerAdapter.CustomViewHolder> {
 
     private static final String LOGTAG = "CustomAdapter TAG";
+    private static final int THRESHOLD = 5;
     private ArrayList<FlickrPhotoObject> galleryItems;
     private CacheingHandler cacheingHandler;
 
     private OnItemClickedListener onItemClickListener;
 
-    private Context context;
+    private EndlessScrollListener endlessScrollListener;
 
-    //private OnRecyclerItemClick onRecyclerItemClick;
+    public void setEndlessScrollListener(EndlessScrollListener endlessScrollListener) {
+        this.endlessScrollListener = endlessScrollListener;
+    }
+
+    public void setGalleryItems(ArrayList<FlickrPhotoObject> galleryItems) {
+        this.galleryItems = galleryItems;
+    }
 
     public CustomRecyclerAdapter(Context context, ArrayList<FlickrPhotoObject> galleryItems) {
         super();
 
-        this.context = context;
         this.galleryItems = galleryItems;
         cacheingHandler = new CacheingHandler();
     }
@@ -71,27 +77,12 @@ public class CustomRecyclerAdapter extends RecyclerView.Adapter<CustomRecyclerAd
             new ImageLoaderTask(holder.photoView).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, galleryItem.getUrl());
         }
 
-        /*try {
-                Bitmap bitmap = cacheingHandler.retrieveBitmapFromExternalStorage(fromPath.getAbsolutePath());
-                if (bitmap != null) {
-                    holder.photoView.setImageBitmap(bitmap);
+        if (position == getItemCount() - THRESHOLD) {
+            if (endlessScrollListener != null) {
+                endlessScrollListener.onLoadMore(position);
             }
-             else {
-                Log.i(LOGTAG, "List is empty");
-                //
-                    new ImageLoaderTask(holder.photoView, context).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, galleryItem.getUrl());
-            }
-            //
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (IndexOutOfBoundsException e) {
-            e.printStackTrace();
-        }*/
+        }
     }
-
-    /*public void setOnRecyclerItemClick(OnRecyclerItemClick onRecyclerItemClick) {
-        this.onRecyclerItemClick = onRecyclerItemClick;
-    }*/
 
     @Override
     public int getItemCount() {
@@ -115,17 +106,6 @@ public class CustomRecyclerAdapter extends RecyclerView.Adapter<CustomRecyclerAd
 
         @Override
         public void onClick(View v) {
-            /*int pos = getAdapterPosition();
-
-            Dialog dialog = new Dialog(context, android.R.style.Theme_Translucent_NoTitleBar_Fullscreen);
-            dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-            dialog.setCancelable(true);
-            dialog.setContentView(R.layout.dialog);
-            ImageView imageView = (ImageView)dialog.findViewById(R.id.iv_big_photo);
-            imageView.setTag(galleryItems.get(pos).getUrl());
-            new ImageLoaderTask(imageView).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, galleryItems.get(pos).getUrl());
-            dialog.show();*/
-
 
             if (onItemClickListener != null) {
                 onItemClickListener.onClick(v, getAdapterPosition());
@@ -136,5 +116,9 @@ public class CustomRecyclerAdapter extends RecyclerView.Adapter<CustomRecyclerAd
 
     public interface OnItemClickedListener {
         void onClick(View view, int pos);
+    }
+
+    public interface EndlessScrollListener {
+        boolean onLoadMore(int pos);
     }
 }

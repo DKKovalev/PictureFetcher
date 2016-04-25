@@ -6,9 +6,11 @@ import java.io.Serializable;
  * Created by DKKovalev on 11.04.2016.
  */
 public class FlickrPhotoObject implements Serializable {
+    private int page;
     private String caption;
     private String id;
     private String url;
+
 
     public FlickrPhotoObject(String caption, String id, String url) {
         this.caption = caption;
@@ -46,5 +48,13 @@ public class FlickrPhotoObject implements Serializable {
 
     public void setUrl(String server, String secret) {
         this.url = "https://farm2.static.flickr.com/" + server + "/" + id + "_" + secret + ".jpg";
+    }
+
+    public int getPage() {
+        return page;
+    }
+
+    public void setPage(int page) {
+        this.page = page;
     }
 }

@@ -112,4 +112,8 @@ public class FlickrFetcher {
             items.add(item);
         }
     }
+
+    private void jsonToGson(){
+
+    }
 }

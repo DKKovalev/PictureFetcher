@@ -1,12 +1,11 @@
 package com.playground.dkkovalev.picturefetcher.Fragments;
 
 import android.content.Context;
-import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,40 +13,40 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import com.playground.dkkovalev.picturefetcher.Assets.CustomRecyclerAdapter;
+import com.playground.dkkovalev.picturefetcher.MVPOperations;
 import com.playground.dkkovalev.picturefetcher.Model.FlickrPhotoObject;
+import com.playground.dkkovalev.picturefetcher.Presenter;
+import com.playground.dkkovalev.picturefetcher.PresenterCache;
+import com.playground.dkkovalev.picturefetcher.PresenterFactory;
 import com.playground.dkkovalev.picturefetcher.R;
-import com.playground.dkkovalev.picturefetcher.Tasks.FlickrFetcherTask;
 
 import java.util.ArrayList;
 
-public class MainFragment extends Fragment implements CustomRecyclerAdapter.OnItemClickedListener {
+public class MainFragment extends Fragment implements MVPOperations.MainViewOperations {
 
     private static final String SAVED_LIST_KEY = "photos";
-    private static final String SAVED_FRAGMENT_TAG = "PAGER_FRAGMENT";
+    private static final String SAVED_FRAGMENT_TAG = "MAIN_FRAGMENT";
+
+    private PresenterCache presenterCache = PresenterCache.getInstance();
+    private boolean isConfigChanged;
+
+    private Presenter presenter;
+    private CustomRecyclerAdapter customRecyclerAdapter;
+    private ArrayList<FlickrPhotoObject> flickrPhotoObjects = new ArrayList<>();
+    private LinearLayoutManager linearLayoutManager;
 
     private RecyclerView recyclerView;
     private EditText queryText;
-    private Button commitSearchBtn;
-
-    private LinearLayoutManager linearLayoutManager;
-
-    private ArrayList<FlickrPhotoObject> flickrPhotoObjects;
-
-    private Fragment pagerFragment;
+    private Button commitSearchButton;
 
     public MainFragment() {
-    }
-
-
-    public void setFlickrPhotoObjects(ArrayList<FlickrPhotoObject> flickrPhotoObjects) {
-        this.flickrPhotoObjects = flickrPhotoObjects;
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        presenter = presenterCache.getPresenter(SAVED_FRAGMENT_TAG, presenterFactory);
     }
-
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -56,65 +55,27 @@ public class MainFragment extends Fragment implements CustomRecyclerAdapter.OnIt
         View view = inflater.inflate(R.layout.fragment_main, container, false);
         setupUI(view);
 
-        if (savedInstanceState != null) {
-
-            flickrPhotoObjects = (ArrayList<FlickrPhotoObject>) savedInstanceState.getSerializable(SAVED_LIST_KEY);
-            CustomRecyclerAdapter customRecyclerAdapter = new CustomRecyclerAdapter(getActivity(), flickrPhotoObjects);
-            recyclerView.setAdapter(customRecyclerAdapter);
-            customRecyclerAdapter.setOnItemClickListener(MainFragment.this);
-            setupFlickrFetcherTask("flickr.photos.getRecent", "");
-
-        } else {
-            setupFlickrFetcherTask("flickr.photos.getRecent", "");
-        }
-
         return view;
     }
 
-    @Override
-    public void onClick(View view, int pos) {
-
-        pagerFragment = new PagerFragment();
-
-        Bundle bundle = new Bundle();
-        bundle.putSerializable("photos", flickrPhotoObjects);
-        bundle.putInt("position", pos);
-        pagerFragment.setArguments(bundle);
-
-        this.getFragmentManager()
-                .beginTransaction()
-                .replace(R.id.fragment_container, pagerFragment, SAVED_FRAGMENT_TAG)
-                .addToBackStack(SAVED_FRAGMENT_TAG)
-                .commit();
-
-        Log.i("LOIJF", String.valueOf(pos));
-    }
-
     private void setupUI(View view) {
-
         recyclerView = (RecyclerView) view.findViewById(R.id.rv_container);
-        queryText = (EditText) view.findViewById(R.id.et_query);
-        commitSearchBtn = (Button) view.findViewById(R.id.btn_search);
-        linearLayoutManager = new LinearLayoutManager(getActivity());
-        recyclerView.setLayoutManager(linearLayoutManager);
 
-        commitSearchBtn.setOnClickListener(new View.OnClickListener() {
+        linearLayoutManager = new LinearLayoutManager(getActivity());
+        customRecyclerAdapter = new CustomRecyclerAdapter(getActivity(), flickrPhotoObjects);
+        recyclerView.setLayoutManager(linearLayoutManager);
+        recyclerView.setAdapter(customRecyclerAdapter);
+
+        queryText = (EditText)view.findViewById(R.id.et_query);
+        commitSearchButton = (Button)view.findViewById(R.id.btn_search);
+        commitSearchButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                setupFlickrFetcherTask("flickr.photos.search", queryText.getText().toString());
+                if(!queryText.getText().toString().isEmpty()){
+                    presenter.fetchItems(0, "flickr.photos.search", queryText.getText().toString());
+                }
             }
         });
-    }
-
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        outState.putSerializable(SAVED_LIST_KEY, flickrPhotoObjects);
-        super.onSaveInstanceState(outState);
-    }
-
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
     }
 
     @Override
@@ -122,20 +83,66 @@ public class MainFragment extends Fragment implements CustomRecyclerAdapter.OnIt
         super.onAttach(context);
     }
 
-    private void setupFlickrFetcherTask(String method, String parameters) {
-        final FlickrFetcherTask flickrFetcherTask = new FlickrFetcherTask(
-                getActivity()
-                , recyclerView
-                , linearLayoutManager
-                , method
-                , parameters
-                , MainFragment.this);
-        flickrFetcherTask.setAsyncCallback(new FlickrFetcherTask.AsyncCallback() {
-            @Override
-            public void onDownloadComplete(ArrayList<FlickrPhotoObject> flickrPhotoObjects) {
-                setFlickrPhotoObjects(flickrPhotoObjects);
-            }
-        });
-        flickrFetcherTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, 1);
+    @Override
+    public void populateRecyclerView(ArrayList<FlickrPhotoObject> flickrPhotoObjects) {
+
+        customRecyclerAdapter.setGalleryItems(flickrPhotoObjects);
+        customRecyclerAdapter.notifyDataSetChanged();
     }
+
+    @Override
+    public void onItemClicked(CustomRecyclerAdapter.OnItemClickedListener onItemClickedListener) {
+
+    }
+
+    private Presenter getPresenter() {
+        if (presenter == null) {
+            presenter = new Presenter();
+        }
+        return presenter;
+    }
+
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        getPresenter().setMainViewOperations(this);
+
+        presenter.fetchItems(0, "flickr.photos.getRecent", null);
+        customRecyclerAdapter.setEndlessScrollListener(presenter.getEndlessScrollListener());
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        presenter.setMainViewOperations(null);
+        presenter = null;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        isConfigChanged = false;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        isConfigChanged = true;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if(!isConfigChanged){
+            presenterCache.removePresenter(SAVED_FRAGMENT_TAG);
+        }
+    }
+
+    private PresenterFactory<Presenter> presenterFactory = new PresenterFactory<Presenter>() {
+        @Override
+        public Presenter createPresenter() {
+            return new Presenter();
+        }
+    };
 }

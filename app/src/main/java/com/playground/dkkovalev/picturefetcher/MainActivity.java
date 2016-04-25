@@ -6,9 +6,14 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.RecyclerView;
 
+import com.playground.dkkovalev.picturefetcher.Assets.CustomRecyclerAdapter;
 import com.playground.dkkovalev.picturefetcher.Fragments.MainFragment;
 import com.playground.dkkovalev.picturefetcher.Fragments.PagerFragment;
+import com.playground.dkkovalev.picturefetcher.Model.FlickrPhotoObject;
+
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
     FragmentManager fragmentManager;
@@ -38,6 +43,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         fragmentManager = getSupportFragmentManager();
 
+        createFragment();
+/*
         if (savedInstanceState != null) {
             mainFragment = fragmentManager.findFragmentByTag(MAIN_FRAGMENT_TAG);
             pagerFragment = fragmentManager.findFragmentByTag(PAGER_FRAGMENT_TAG);
@@ -46,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
             }
         } else {
             createFragment();
-        }
+        }*/
     }
 
     @Override
