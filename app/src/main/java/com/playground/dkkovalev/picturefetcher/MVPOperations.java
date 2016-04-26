@@ -14,7 +14,6 @@ import java.util.ArrayList;
 public interface MVPOperations {
     interface MainViewOperations{
         void populateRecyclerView(ArrayList<FlickrPhotoObject> flickrPhotoObjects);
-        void onItemClicked(CustomRecyclerAdapter.OnItemClickedListener onItemClickedListener);
     }
 
     interface PagerViewOperations{

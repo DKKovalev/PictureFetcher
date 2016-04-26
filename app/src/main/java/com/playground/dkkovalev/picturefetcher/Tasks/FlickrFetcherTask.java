@@ -63,7 +63,7 @@ public class FlickrFetcherTask extends AsyncTask<Integer, Void, ArrayList<Flickr
 
 
 
-        customRecyclerAdapter = new CustomRecyclerAdapter(context, galleryItems);
+        customRecyclerAdapter = new CustomRecyclerAdapter(galleryItems);
 
         asyncCallback.onDownloadComplete(galleryItems);
 

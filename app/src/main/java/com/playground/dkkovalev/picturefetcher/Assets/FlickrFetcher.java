@@ -3,6 +3,7 @@ package com.playground.dkkovalev.picturefetcher.Assets;
 import android.net.Uri;
 import android.util.Log;
 
+import com.google.gson.Gson;
 import com.playground.dkkovalev.picturefetcher.Model.FlickrPhotoObject;
 
 import org.json.JSONArray;
@@ -81,7 +82,6 @@ public class FlickrFetcher {
 
             JSONObject jsonObject = new JSONObject(jsonString);
             parseItems(recentPhotos, jsonObject);
-
         } catch (IOException e) {
 
         } catch (JSONException e) {
@@ -94,12 +94,16 @@ public class FlickrFetcher {
     private void parseItems(ArrayList<FlickrPhotoObject> items, JSONObject jsonObject) throws IOException, JSONException {
 
         JSONObject photosJsonObject = jsonObject.getJSONObject("photos");
+
+
+
         JSONArray photoJsonArray = photosJsonObject.getJSONArray("photo");
 
         for (int i = 0; i < photoJsonArray.length(); i++) {
             JSONObject photoJsonObject = photoJsonArray.getJSONObject(i);
 
             FlickrPhotoObject item = new FlickrPhotoObject();
+            item.setPage(photosJsonObject.getInt("page"));
             item.setId(photoJsonObject.getString("id"));
             item.setCaption(photoJsonObject.getString("title"));
 
@@ -111,9 +115,5 @@ public class FlickrFetcher {
 
             items.add(item);
         }
-    }
-
-    private void jsonToGson(){
-
     }
 }

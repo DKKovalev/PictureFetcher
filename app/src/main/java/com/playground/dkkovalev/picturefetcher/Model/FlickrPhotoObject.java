@@ -1,6 +1,7 @@
 package com.playground.dkkovalev.picturefetcher.Model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 
 /**
  * Created by DKKovalev on 11.04.2016.

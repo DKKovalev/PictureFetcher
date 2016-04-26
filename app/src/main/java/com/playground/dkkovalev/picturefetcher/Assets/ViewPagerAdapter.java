@@ -10,7 +10,6 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 
 import com.playground.dkkovalev.picturefetcher.Model.FlickrPhotoObject;
-import com.playground.dkkovalev.picturefetcher.Tasks.ImageLoaderTask;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -25,14 +24,21 @@ import java.util.ArrayList;
  */
 public class ViewPagerAdapter extends PagerAdapter {
 
+    private static final int THRESHOLD = 15;
     private ArrayList<FlickrPhotoObject> flickrPhotoObjects;
     private Context context;
     private int pos;
+
+    private EndlessSwipe endlessSwipe;
 
     public ViewPagerAdapter(Context context, ArrayList<FlickrPhotoObject> flickrPhotoObjects, int pos) {
         this.context = context;
         this.flickrPhotoObjects = flickrPhotoObjects;
         this.pos = pos;
+    }
+
+    public void setFlickrPhotoObjects(ArrayList<FlickrPhotoObject> flickrPhotoObjects) {
+        this.flickrPhotoObjects = flickrPhotoObjects;
     }
 
     @Override
@@ -42,6 +48,13 @@ public class ViewPagerAdapter extends PagerAdapter {
         new ImageLoaderTask1(imageView, context).execute(flickrPhotoObjects.get(position).getUrl());
 
         container.addView(imageView);
+
+        if (position == getCount() - THRESHOLD) {
+            if (endlessSwipe != null) {
+                endlessSwipe.onSwipe(position);
+            }
+        }
+
         return imageView;
     }
 
@@ -102,5 +115,9 @@ public class ViewPagerAdapter extends PagerAdapter {
 
             imageView.setImageBitmap(bitmap);
         }
+    }
+
+    public interface EndlessSwipe{
+        boolean onSwipe(int pos);
     }
 }

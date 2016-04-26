@@ -1,19 +1,12 @@
 package com.playground.dkkovalev.picturefetcher.Assets;
 
-import android.app.Dialog;
-import android.app.Fragment;
-import android.app.FragmentManager;
-import android.content.Context;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.widget.ImageView;
 
 import com.playground.dkkovalev.picturefetcher.Model.FlickrPhotoObject;
@@ -30,7 +23,7 @@ public class CustomRecyclerAdapter extends RecyclerView.Adapter<CustomRecyclerAd
 
     private static final String LOGTAG = "CustomAdapter TAG";
     private static final int THRESHOLD = 5;
-    private ArrayList<FlickrPhotoObject> galleryItems;
+    private ArrayList<FlickrPhotoObject> flickrPhotoObjects;
     private CacheingHandler cacheingHandler;
 
     private OnItemClickedListener onItemClickListener;
@@ -41,14 +34,14 @@ public class CustomRecyclerAdapter extends RecyclerView.Adapter<CustomRecyclerAd
         this.endlessScrollListener = endlessScrollListener;
     }
 
-    public void setGalleryItems(ArrayList<FlickrPhotoObject> galleryItems) {
-        this.galleryItems = galleryItems;
+    public void setFlickrPhotoObjects(ArrayList<FlickrPhotoObject> flickrPhotoObjects) {
+        this.flickrPhotoObjects = flickrPhotoObjects;
     }
 
-    public CustomRecyclerAdapter(Context context, ArrayList<FlickrPhotoObject> galleryItems) {
+    public CustomRecyclerAdapter(ArrayList<FlickrPhotoObject> flickrPhotoObjects) {
         super();
 
-        this.galleryItems = galleryItems;
+        this.flickrPhotoObjects = flickrPhotoObjects;
         cacheingHandler = new CacheingHandler();
     }
 
@@ -64,12 +57,14 @@ public class CustomRecyclerAdapter extends RecyclerView.Adapter<CustomRecyclerAd
 
         //TODO Main fetching goes there
 
-        FlickrPhotoObject galleryItem = galleryItems.get(position);
+        FlickrPhotoObject galleryItem = flickrPhotoObjects.get(position);
         holder.photoView.setTag(galleryItem.getUrl());
+
+        Log.i("TAG", String.valueOf(galleryItem.getPage()));
 
         holder.photoView.setImageResource(R.drawable.placeholder);
 
-        Bitmap photo = cacheingHandler.loadBitmapFromLru(galleryItems.get(position).getUrl());
+        Bitmap photo = cacheingHandler.loadBitmapFromLru(flickrPhotoObjects.get(position).getUrl());
 
         if (photo != null) {
             holder.photoView.setImageBitmap(photo);
@@ -86,7 +81,7 @@ public class CustomRecyclerAdapter extends RecyclerView.Adapter<CustomRecyclerAd
 
     @Override
     public int getItemCount() {
-        return galleryItems.size();
+        return flickrPhotoObjects.size();
     }
 
     public void setOnItemClickListener(OnItemClickedListener onItemClickListener) {

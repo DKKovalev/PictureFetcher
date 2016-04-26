@@ -22,10 +22,11 @@ import com.playground.dkkovalev.picturefetcher.R;
 
 import java.util.ArrayList;
 
-public class MainFragment extends Fragment implements MVPOperations.MainViewOperations {
+public class MainFragment extends Fragment implements MVPOperations.MainViewOperations, CustomRecyclerAdapter.OnItemClickedListener {
 
     private static final String SAVED_LIST_KEY = "photos";
     private static final String SAVED_FRAGMENT_TAG = "MAIN_FRAGMENT";
+    private static final String PAGER_FRAGMENT_TAG = "PAGER_FRAGMENT";
 
     private PresenterCache presenterCache = PresenterCache.getInstance();
     private boolean isConfigChanged;
@@ -62,7 +63,7 @@ public class MainFragment extends Fragment implements MVPOperations.MainViewOper
         recyclerView = (RecyclerView) view.findViewById(R.id.rv_container);
 
         linearLayoutManager = new LinearLayoutManager(getActivity());
-        customRecyclerAdapter = new CustomRecyclerAdapter(getActivity(), flickrPhotoObjects);
+        customRecyclerAdapter = new CustomRecyclerAdapter(flickrPhotoObjects);
         recyclerView.setLayoutManager(linearLayoutManager);
         recyclerView.setAdapter(customRecyclerAdapter);
 
@@ -86,13 +87,8 @@ public class MainFragment extends Fragment implements MVPOperations.MainViewOper
     @Override
     public void populateRecyclerView(ArrayList<FlickrPhotoObject> flickrPhotoObjects) {
 
-        customRecyclerAdapter.setGalleryItems(flickrPhotoObjects);
+        customRecyclerAdapter.setFlickrPhotoObjects(flickrPhotoObjects);
         customRecyclerAdapter.notifyDataSetChanged();
-    }
-
-    @Override
-    public void onItemClicked(CustomRecyclerAdapter.OnItemClickedListener onItemClickedListener) {
-
     }
 
     private Presenter getPresenter() {
@@ -110,6 +106,7 @@ public class MainFragment extends Fragment implements MVPOperations.MainViewOper
 
         presenter.fetchItems(0, "flickr.photos.getRecent", null);
         customRecyclerAdapter.setEndlessScrollListener(presenter.getEndlessScrollListener());
+        customRecyclerAdapter.setOnItemClickListener(this);
     }
 
     @Override
@@ -145,4 +142,18 @@ public class MainFragment extends Fragment implements MVPOperations.MainViewOper
             return new Presenter();
         }
     };
+
+    @Override
+    public void onClick(View view, int pos) {
+        PagerFragment pagerFragment = new PagerFragment();
+        Bundle bundle = new Bundle();
+        bundle.putSerializable("photos", flickrPhotoObjects);
+        bundle.putInt("position", pos);
+        pagerFragment.setArguments(bundle);
+        this.getFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragment_container, pagerFragment, PAGER_FRAGMENT_TAG)
+                .addToBackStack(PAGER_FRAGMENT_TAG)
+                .commit();
+    }
 }
