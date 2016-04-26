@@ -22,7 +22,7 @@ import com.playground.dkkovalev.picturefetcher.R;
 
 import java.util.ArrayList;
 
-public class MainFragment extends Fragment implements MVPOperations.MainViewOperations, CustomRecyclerAdapter.OnItemClickedListener {
+public class MainFragment extends Fragment implements MVPOperations.MainViewOperations {
 
     private static final String SAVED_LIST_KEY = "photos";
     private static final String SAVED_FRAGMENT_TAG = "MAIN_FRAGMENT";
@@ -67,12 +67,12 @@ public class MainFragment extends Fragment implements MVPOperations.MainViewOper
         recyclerView.setLayoutManager(linearLayoutManager);
         recyclerView.setAdapter(customRecyclerAdapter);
 
-        queryText = (EditText)view.findViewById(R.id.et_query);
-        commitSearchButton = (Button)view.findViewById(R.id.btn_search);
+        queryText = (EditText) view.findViewById(R.id.et_query);
+        commitSearchButton = (Button) view.findViewById(R.id.btn_search);
         commitSearchButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(!queryText.getText().toString().isEmpty()){
+                if (!queryText.getText().toString().isEmpty()) {
                     presenter.fetchItems(0, "flickr.photos.search", queryText.getText().toString());
                 }
             }
@@ -89,6 +89,13 @@ public class MainFragment extends Fragment implements MVPOperations.MainViewOper
 
         customRecyclerAdapter.setFlickrPhotoObjects(flickrPhotoObjects);
         customRecyclerAdapter.notifyDataSetChanged();
+
+        setFlickrPhotoObjects(flickrPhotoObjects);
+    }
+
+    @Override
+    public void onItemClick(CustomRecyclerAdapter.OnItemClickedListener onItemClickedListener) {
+        customRecyclerAdapter.setOnItemClickListener(onItemClickedListener);
     }
 
     private Presenter getPresenter() {
@@ -106,7 +113,24 @@ public class MainFragment extends Fragment implements MVPOperations.MainViewOper
 
         presenter.fetchItems(0, "flickr.photos.getRecent", null);
         customRecyclerAdapter.setEndlessScrollListener(presenter.getEndlessScrollListener());
-        customRecyclerAdapter.setOnItemClickListener(this);
+
+        onItemClick(new CustomRecyclerAdapter.OnItemClickedListener() {
+            @Override
+            public void onClick(View view, int pos) {
+                PagerFragment pagerFragment = new PagerFragment();
+                Bundle bundle = new Bundle();
+                bundle.putSerializable("photos", flickrPhotoObjects);
+                bundle.putInt("position", pos);
+                pagerFragment.setArguments(bundle);
+                MainFragment.this.getFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.fragment_container, pagerFragment, PAGER_FRAGMENT_TAG)
+                        .addToBackStack(PAGER_FRAGMENT_TAG)
+                        .commit();
+            }
+        });
+
+        //customRecyclerAdapter.setOnItemClickListener(this);
     }
 
     @Override
@@ -131,7 +155,7 @@ public class MainFragment extends Fragment implements MVPOperations.MainViewOper
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if(!isConfigChanged){
+        if (!isConfigChanged) {
             presenterCache.removePresenter(SAVED_FRAGMENT_TAG);
         }
     }
@@ -143,17 +167,7 @@ public class MainFragment extends Fragment implements MVPOperations.MainViewOper
         }
     };
 
-    @Override
-    public void onClick(View view, int pos) {
-        PagerFragment pagerFragment = new PagerFragment();
-        Bundle bundle = new Bundle();
-        bundle.putSerializable("photos", flickrPhotoObjects);
-        bundle.putInt("position", pos);
-        pagerFragment.setArguments(bundle);
-        this.getFragmentManager()
-                .beginTransaction()
-                .replace(R.id.fragment_container, pagerFragment, PAGER_FRAGMENT_TAG)
-                .addToBackStack(PAGER_FRAGMENT_TAG)
-                .commit();
+    private void setFlickrPhotoObjects(ArrayList<FlickrPhotoObject> flickrPhotoObjects) {
+        this.flickrPhotoObjects = flickrPhotoObjects;
     }
 }

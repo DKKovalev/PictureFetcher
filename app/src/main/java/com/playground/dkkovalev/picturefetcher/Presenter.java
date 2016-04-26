@@ -4,7 +4,6 @@ import android.os.AsyncTask;
 
 import com.playground.dkkovalev.picturefetcher.Assets.CustomRecyclerAdapter;
 import com.playground.dkkovalev.picturefetcher.Assets.FlickrFetcher;
-import com.playground.dkkovalev.picturefetcher.Assets.ViewPagerAdapter;
 import com.playground.dkkovalev.picturefetcher.Model.FlickrPhotoObject;
 
 import java.util.ArrayList;
@@ -15,7 +14,6 @@ import java.util.ArrayList;
 public class Presenter implements MVPOperations.PresenterOperations {
 
     private CustomRecyclerAdapter.EndlessScrollListener endlessScrollListener;
-    private ViewPagerAdapter.EndlessSwipe endlessSwipe;
 
     private MVPOperations.MainViewOperations mainViewOperations;
     private MVPOperations.PagerViewOperations pagerViewOperations;
@@ -69,11 +67,7 @@ public class Presenter implements MVPOperations.PresenterOperations {
         return endlessScrollListener;
     }
 
-    public void setEndlessSwipe(ViewPagerAdapter.EndlessSwipe endlessSwipe) {
-        this.endlessSwipe = endlessSwipe;
-    }
-
-    private class FlickrFetcherTask extends AsyncTask<Integer, Void, ArrayList<FlickrPhotoObject>> implements CustomRecyclerAdapter.EndlessScrollListener, ViewPagerAdapter.EndlessSwipe {
+    private class FlickrFetcherTask extends AsyncTask<Integer, Void, ArrayList<FlickrPhotoObject>> implements CustomRecyclerAdapter.EndlessScrollListener {
 
         private ArrayList<FlickrPhotoObject> flickrPhotoObjects;
 
@@ -82,7 +76,6 @@ public class Presenter implements MVPOperations.PresenterOperations {
 
         public FlickrFetcherTask(String method, String tags) {
             setEndlessScrollListener(this);
-            setEndlessSwipe(this);
             this.method = method;
             this.tags = tags;
         }
@@ -103,12 +96,6 @@ public class Presenter implements MVPOperations.PresenterOperations {
 
         @Override
         public boolean onLoadMore(int pos) {
-            new MoreFetching().execute(pos);
-            return false;
-        }
-
-        @Override
-        public boolean onSwipe(int pos) {
             new MoreFetching().execute(pos);
             return false;
         }

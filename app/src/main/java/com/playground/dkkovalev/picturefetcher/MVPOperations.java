@@ -14,6 +14,7 @@ import java.util.ArrayList;
 public interface MVPOperations {
     interface MainViewOperations{
         void populateRecyclerView(ArrayList<FlickrPhotoObject> flickrPhotoObjects);
+        void onItemClick(CustomRecyclerAdapter.OnItemClickedListener onItemClickedListener);
     }
 
     interface PagerViewOperations{
@@ -25,5 +26,6 @@ public interface MVPOperations {
         void onDestroy(boolean isConfigChanged);
         void fetchItems(int page, String method, String tags);
         void onItemsFetched(ArrayList<FlickrPhotoObject> flickrPhotoObjects);
+
     }
 }

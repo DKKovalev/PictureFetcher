@@ -29,7 +29,6 @@ public class ViewPagerAdapter extends PagerAdapter {
     private Context context;
     private int pos;
 
-    private EndlessSwipe endlessSwipe;
 
     public ViewPagerAdapter(Context context, ArrayList<FlickrPhotoObject> flickrPhotoObjects, int pos) {
         this.context = context;
@@ -37,23 +36,13 @@ public class ViewPagerAdapter extends PagerAdapter {
         this.pos = pos;
     }
 
-    public void setFlickrPhotoObjects(ArrayList<FlickrPhotoObject> flickrPhotoObjects) {
-        this.flickrPhotoObjects = flickrPhotoObjects;
-    }
-
     @Override
     public Object instantiateItem(ViewGroup container, int position) {
 
         ImageView imageView = new ImageView(context);
-        new ImageLoaderTask1(imageView, context).execute(flickrPhotoObjects.get(position).getUrl());
+        new ImageLoaderTask1(imageView).execute(flickrPhotoObjects.get(position).getUrl());
 
         container.addView(imageView);
-
-        if (position == getCount() - THRESHOLD) {
-            if (endlessSwipe != null) {
-                endlessSwipe.onSwipe(position);
-            }
-        }
 
         return imageView;
     }
@@ -73,14 +62,15 @@ public class ViewPagerAdapter extends PagerAdapter {
         return view == object;
     }
 
+    public void setFlickrPhotoObjects(ArrayList<FlickrPhotoObject> flickrPhotoObjects) {
+        this.flickrPhotoObjects = flickrPhotoObjects;
+    }
 
     public class ImageLoaderTask1 extends AsyncTask<String, Void, Bitmap> {
 
-        private Context context;
         ImageView imageView;
 
-        public ImageLoaderTask1(ImageView photoView, Context context) {
-            this.context = context;
+        public ImageLoaderTask1(ImageView photoView) {
             this.imageView = photoView;
         }
 
@@ -115,9 +105,5 @@ public class ViewPagerAdapter extends PagerAdapter {
 
             imageView.setImageBitmap(bitmap);
         }
-    }
-
-    public interface EndlessSwipe{
-        boolean onSwipe(int pos);
     }
 }

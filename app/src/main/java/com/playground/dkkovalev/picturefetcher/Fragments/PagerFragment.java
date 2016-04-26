@@ -25,10 +25,11 @@ import java.util.ListIterator;
 public class PagerFragment extends Fragment implements MVPOperations.PagerViewOperations {
     private static final String SAVED_INT = "current_position";
     private static final String SAVED_FRAGMENT_TAG = "PAGER_FRAGMENT";
+    private static final String PAGER_LOGTAG = "PAGER_LOGTAG";
     private ViewPager viewPager;
 
     private ArrayList<FlickrPhotoObject> flickrPhotoObjects = new ArrayList<>();
-    private int position = 0;
+    private int position;
 
     private PresenterCache presenterCache = PresenterCache.getInstance();
     private boolean isConfigChanged;
@@ -46,8 +47,8 @@ public class PagerFragment extends Fragment implements MVPOperations.PagerViewOp
         super.onCreate(savedInstanceState);
 
         presenter = presenterCache.getPresenter(SAVED_FRAGMENT_TAG, presenterFactory);
-        //flickrPhotoObjects = (ArrayList<FlickrPhotoObject>) getArguments().getSerializable("photos");
-        //position = getArguments().getInt("position");
+        flickrPhotoObjects = (ArrayList<FlickrPhotoObject>) getArguments().getSerializable("photos");
+        position = getArguments().getInt("position");
     }
 
     @Override
@@ -55,13 +56,13 @@ public class PagerFragment extends Fragment implements MVPOperations.PagerViewOp
                              Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_pager, container, false);
-
         setupUI(view);
 
         return view;
     }
 
     private void setupUI(View view) {
+
         viewPager = (ViewPager) view.findViewById(R.id.view);
         viewPagerAdapter = new ViewPagerAdapter(getActivity(), flickrPhotoObjects, position);
         viewPager.setAdapter(viewPagerAdapter);
@@ -94,19 +95,18 @@ public class PagerFragment extends Fragment implements MVPOperations.PagerViewOp
         //TODO Продумать логику показа изображений. Сравнить size и position
 
         getPresenter().setPagerViewOperations(this);
-        presenter.fetchItems(0, "flickr.photos.getRecent", null);
 
         viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
                 if(position == flickrPhotoObjects.size()){
-                    Log.i("HHHHHH", "End");
+                    Log.i(PAGER_LOGTAG, "End");
                 }
             }
 
             @Override
             public void onPageSelected(int position) {
-                Log.i("TAFHGGS", String.valueOf(position));
+                Log.i(PAGER_LOGTAG, String.valueOf(position));
             }
 
             @Override
@@ -114,11 +114,6 @@ public class PagerFragment extends Fragment implements MVPOperations.PagerViewOp
 
             }
         });
-
-/*        ListIterator<FlickrPhotoObject> iterator = flickrPhotoObjects.listIterator();
-        if (!iterator.hasNext()) {
-            //TODO Дошли до конца, грузим новые. Отловить событие свайпа
-        }*/
     }
 
     @Override
