@@ -24,17 +24,19 @@ import java.util.ArrayList;
  */
 public class ViewPagerAdapter extends PagerAdapter {
 
-    private static final int THRESHOLD = 15;
+    private static final int THRESHOLD = 13;
     private ArrayList<FlickrPhotoObject> flickrPhotoObjects;
     private Context context;
-    private int pos;
+
+    private EndlessSwipeListener endlessSwipeListener;
 
 
-    public ViewPagerAdapter(Context context, ArrayList<FlickrPhotoObject> flickrPhotoObjects, int pos) {
+    public ViewPagerAdapter(Context context, ArrayList<FlickrPhotoObject> flickrPhotoObjects) {
         this.context = context;
         this.flickrPhotoObjects = flickrPhotoObjects;
-        this.pos = pos;
     }
+
+
 
     @Override
     public Object instantiateItem(ViewGroup container, int position) {
@@ -43,6 +45,12 @@ public class ViewPagerAdapter extends PagerAdapter {
         new ImageLoaderTask1(imageView).execute(flickrPhotoObjects.get(position).getUrl());
 
         container.addView(imageView);
+
+        if (position == flickrPhotoObjects.size() - THRESHOLD) {
+            if (endlessSwipeListener != null) {
+                endlessSwipeListener.onLoadMore(position);
+            }
+        }
 
         return imageView;
     }
@@ -59,11 +67,16 @@ public class ViewPagerAdapter extends PagerAdapter {
 
     @Override
     public boolean isViewFromObject(View view, Object object) {
+
         return view == object;
     }
 
     public void setFlickrPhotoObjects(ArrayList<FlickrPhotoObject> flickrPhotoObjects) {
         this.flickrPhotoObjects = flickrPhotoObjects;
+    }
+
+    public void setEndlessSwipeListener(EndlessSwipeListener endlessSwipeListener) {
+        this.endlessSwipeListener = endlessSwipeListener;
     }
 
     public class ImageLoaderTask1 extends AsyncTask<String, Void, Bitmap> {
@@ -105,5 +118,9 @@ public class ViewPagerAdapter extends PagerAdapter {
 
             imageView.setImageBitmap(bitmap);
         }
+    }
+
+    public interface EndlessSwipeListener {
+        boolean onLoadMore(int pos);
     }
 }

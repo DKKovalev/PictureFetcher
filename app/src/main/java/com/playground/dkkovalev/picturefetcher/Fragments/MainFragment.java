@@ -22,7 +22,7 @@ import com.playground.dkkovalev.picturefetcher.R;
 
 import java.util.ArrayList;
 
-public class MainFragment extends Fragment implements MVPOperations.MainViewOperations {
+public class MainFragment extends Fragment implements MVPOperations.ViewOperations {
 
     private static final String SAVED_LIST_KEY = "photos";
     private static final String SAVED_FRAGMENT_TAG = "MAIN_FRAGMENT";
@@ -73,7 +73,7 @@ public class MainFragment extends Fragment implements MVPOperations.MainViewOper
             @Override
             public void onClick(View v) {
                 if (!queryText.getText().toString().isEmpty()) {
-                    presenter.fetchItems(0, "flickr.photos.search", queryText.getText().toString());
+                    presenter.fetchItems(MainFragment.this, getActivity(), 0, "flickr.photos.search", queryText.getText().toString());
                 }
             }
         });
@@ -85,7 +85,7 @@ public class MainFragment extends Fragment implements MVPOperations.MainViewOper
     }
 
     @Override
-    public void populateRecyclerView(ArrayList<FlickrPhotoObject> flickrPhotoObjects) {
+    public void setData(ArrayList<FlickrPhotoObject> flickrPhotoObjects) {
 
         customRecyclerAdapter.setFlickrPhotoObjects(flickrPhotoObjects);
         customRecyclerAdapter.notifyDataSetChanged();
@@ -96,6 +96,11 @@ public class MainFragment extends Fragment implements MVPOperations.MainViewOper
     @Override
     public void onItemClick(CustomRecyclerAdapter.OnItemClickedListener onItemClickedListener) {
         customRecyclerAdapter.setOnItemClickListener(onItemClickedListener);
+    }
+
+    @Override
+    public void notifyData(ArrayList<FlickrPhotoObject> list) {
+
     }
 
     private Presenter getPresenter() {
@@ -111,7 +116,10 @@ public class MainFragment extends Fragment implements MVPOperations.MainViewOper
 
         getPresenter().setMainViewOperations(this);
 
-        presenter.fetchItems(0, "flickr.photos.getRecent", null);
+        if (flickrPhotoObjects.isEmpty()) {
+            presenter.fetchItems(MainFragment.this, getActivity(), 0, "flickr.photos.getRecent", null);
+        }
+
         customRecyclerAdapter.setEndlessScrollListener(presenter.getEndlessScrollListener());
 
         onItemClick(new CustomRecyclerAdapter.OnItemClickedListener() {
@@ -136,8 +144,10 @@ public class MainFragment extends Fragment implements MVPOperations.MainViewOper
     @Override
     public void onDetach() {
         super.onDetach();
-        presenter.setMainViewOperations(null);
-        presenter = null;
+        if (presenter != null) {
+            presenter.setMainViewOperations(null);
+            presenter = null;
+        }
     }
 
     @Override

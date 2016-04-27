@@ -105,7 +105,6 @@ public class CustomRecyclerAdapter extends RecyclerView.Adapter<CustomRecyclerAd
             if (onItemClickListener != null) {
                 onItemClickListener.onClick(v, getAdapterPosition());
             }
-
         }
     }
 

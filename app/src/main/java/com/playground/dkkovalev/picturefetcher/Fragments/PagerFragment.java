@@ -10,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.playground.dkkovalev.picturefetcher.Assets.CustomRecyclerAdapter;
 import com.playground.dkkovalev.picturefetcher.Assets.ViewPagerAdapter;
 import com.playground.dkkovalev.picturefetcher.MVPOperations;
 import com.playground.dkkovalev.picturefetcher.Model.FlickrPhotoObject;
@@ -22,7 +23,7 @@ import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.ListIterator;
 
-public class PagerFragment extends Fragment implements MVPOperations.PagerViewOperations {
+public class PagerFragment extends Fragment implements MVPOperations.ViewOperations {
     private static final String SAVED_INT = "current_position";
     private static final String SAVED_FRAGMENT_TAG = "PAGER_FRAGMENT";
     private static final String PAGER_LOGTAG = "PAGER_LOGTAG";
@@ -64,14 +65,25 @@ public class PagerFragment extends Fragment implements MVPOperations.PagerViewOp
     private void setupUI(View view) {
 
         viewPager = (ViewPager) view.findViewById(R.id.view);
-        viewPagerAdapter = new ViewPagerAdapter(getActivity(), flickrPhotoObjects, position);
+        viewPagerAdapter = new ViewPagerAdapter(getActivity(), flickrPhotoObjects);
         viewPager.setAdapter(viewPagerAdapter);
         viewPager.setCurrentItem(position);
     }
 
     @Override
-    public void showViewPager(ArrayList<FlickrPhotoObject> flickrPhotoObjects) {
+    public void setData(ArrayList<FlickrPhotoObject> flickrPhotoObjects) {
         viewPagerAdapter.setFlickrPhotoObjects(flickrPhotoObjects);
+        viewPagerAdapter.notifyDataSetChanged();
+    }
+
+    @Override
+    public void onItemClick(CustomRecyclerAdapter.OnItemClickedListener onItemClickedListener) {
+
+    }
+
+    @Override
+    public void notifyData(ArrayList<FlickrPhotoObject> list) {
+        viewPagerAdapter.setFlickrPhotoObjects(list);
         viewPagerAdapter.notifyDataSetChanged();
     }
 
@@ -92,15 +104,23 @@ public class PagerFragment extends Fragment implements MVPOperations.PagerViewOp
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        //TODO Продумать логику показа изображений. Сравнить size и position
 
-        getPresenter().setPagerViewOperations(this);
+
+        getPresenter().fetchItems(PagerFragment.this, getActivity(), 0, "flickr.photos.getRecent", null);
+
+        getPresenter().setMainViewOperations(this);
 
         viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-                if(position == flickrPhotoObjects.size()){
-                    Log.i(PAGER_LOGTAG, "End");
+
+                viewPagerAdapter.setEndlessSwipeListener(getPresenter().getEndlessSwipeListener());
+
+                if (position == flickrPhotoObjects.size() - 3) {
+
+                    viewPagerAdapter.notifyDataSetChanged();
+
+                    Log.i(PAGER_LOGTAG, "Load");
                 }
             }
 
@@ -119,8 +139,10 @@ public class PagerFragment extends Fragment implements MVPOperations.PagerViewOp
     @Override
     public void onDetach() {
         super.onDetach();
-        presenter.setPagerViewOperations(null);
-        presenter = null;
+        if (presenter != null) {
+            presenter.setMainViewOperations(null);
+            presenter = null;
+        }
     }
 
     @Override

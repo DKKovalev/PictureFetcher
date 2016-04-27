@@ -28,7 +28,8 @@ public class MainActivity extends AppCompatActivity {
   */
 
     /*TODO 20.04.2016: Сделать нормальный поворот экрана.
-    * TODO 21.04.2016: Реализация паттерна MVP (Model View Presenter)*/
+    * TODO 21.04.2016: Реализация паттерна MVP (Model View Presenter)
+    * TODO Посмотреть в PagerFragment почему не перелистывается после сворачивания*/
 
     private Fragment mainFragment;
     private Fragment pagerFragment;

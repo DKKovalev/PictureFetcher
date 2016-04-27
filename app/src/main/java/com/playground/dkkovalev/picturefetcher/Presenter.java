@@ -1,9 +1,14 @@
 package com.playground.dkkovalev.picturefetcher;
 
+import android.content.Context;
 import android.os.AsyncTask;
+import android.os.Handler;
+import android.support.v4.app.DialogFragment;
+import android.support.v4.app.Fragment;
 
 import com.playground.dkkovalev.picturefetcher.Assets.CustomRecyclerAdapter;
 import com.playground.dkkovalev.picturefetcher.Assets.FlickrFetcher;
+import com.playground.dkkovalev.picturefetcher.Assets.ViewPagerAdapter;
 import com.playground.dkkovalev.picturefetcher.Model.FlickrPhotoObject;
 
 import java.util.ArrayList;
@@ -14,48 +19,28 @@ import java.util.ArrayList;
 public class Presenter implements MVPOperations.PresenterOperations {
 
     private CustomRecyclerAdapter.EndlessScrollListener endlessScrollListener;
+    private ViewPagerAdapter.EndlessSwipeListener endlessSwipeListener;
 
-    private MVPOperations.MainViewOperations mainViewOperations;
-    private MVPOperations.PagerViewOperations pagerViewOperations;
-
-    private boolean isConfigChanged;
+    private MVPOperations.ViewOperations mainViewOperations;
 
     public Presenter() {
 
     }
-
-    public void setMainViewOperations(MVPOperations.MainViewOperations mainViewOperations) {
+    public void setMainViewOperations(MVPOperations.ViewOperations mainViewOperations) {
         this.mainViewOperations = mainViewOperations;
     }
 
-    public void setPagerViewOperations(MVPOperations.PagerViewOperations pagerViewOperations) {
-        this.pagerViewOperations = pagerViewOperations;
-    }
-
     @Override
-    public void onConfigurationChanged(MVPOperations.MainViewOperations view) {
-
+    public void fetchItems(Fragment fragment, Context context, int page, String method, String tags) {
+        new FlickrFetcherTask(fragment, method, tags).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, page);
     }
 
-    @Override
-    public void onDestroy(boolean isConfigChanged) {
-        this.isConfigChanged = isConfigChanged;
-        if (!isConfigChanged) {
-        }
-    }
-
-    @Override
-    public void fetchItems(int page, String method, String tags) {
-        new FlickrFetcherTask(method, tags).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, page);
-    }
 
     @Override
     public void onItemsFetched(ArrayList<FlickrPhotoObject> flickrPhotoObjects) {
         if (mainViewOperations != null) {
-            mainViewOperations.populateRecyclerView(flickrPhotoObjects);
-        }
-        if (pagerViewOperations != null) {
-            pagerViewOperations.showViewPager(flickrPhotoObjects);
+            mainViewOperations.setData(flickrPhotoObjects);
+            //mainViewOperations.setData(flickrPhotoObjects);
         }
     }
 
@@ -67,17 +52,28 @@ public class Presenter implements MVPOperations.PresenterOperations {
         return endlessScrollListener;
     }
 
-    private class FlickrFetcherTask extends AsyncTask<Integer, Void, ArrayList<FlickrPhotoObject>> implements CustomRecyclerAdapter.EndlessScrollListener {
+    public ViewPagerAdapter.EndlessSwipeListener getEndlessSwipeListener() {
+        return endlessSwipeListener;
+    }
+
+    public void setEndlessSwipeListener(ViewPagerAdapter.EndlessSwipeListener endlessSwipeListener) {
+        this.endlessSwipeListener = endlessSwipeListener;
+    }
+
+    private class FlickrFetcherTask extends AsyncTask<Integer, Void, ArrayList<FlickrPhotoObject>> implements CustomRecyclerAdapter.EndlessScrollListener, ViewPagerAdapter.EndlessSwipeListener {
 
         private ArrayList<FlickrPhotoObject> flickrPhotoObjects;
 
         private String method;
         private String tags;
+        private Fragment fragment;
 
-        public FlickrFetcherTask(String method, String tags) {
+        public FlickrFetcherTask(Fragment fragment, String method, String tags) {
             setEndlessScrollListener(this);
+            setEndlessSwipeListener(this);
             this.method = method;
             this.tags = tags;
+            this.fragment = fragment;
         }
 
         @Override
@@ -102,6 +98,16 @@ public class Presenter implements MVPOperations.PresenterOperations {
 
         private class MoreFetching extends AsyncTask<Integer, Void, ArrayList<FlickrPhotoObject>> {
 
+            DialogFragment dialogFragment;
+
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+
+                dialogFragment = CustomAlertDialogFragment.newInstance("Loading");
+                dialogFragment.show(fragment.getFragmentManager(), "Alert");
+            }
+
             @Override
             protected ArrayList<FlickrPhotoObject> doInBackground(Integer... params) {
 
@@ -112,7 +118,18 @@ public class Presenter implements MVPOperations.PresenterOperations {
             protected void onPostExecute(ArrayList<FlickrPhotoObject> galleryItems1) {
                 super.onPostExecute(galleryItems1);
 
+                Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        dialogFragment.dismiss();
+                    }
+                }, 1000);
+
                 flickrPhotoObjects.addAll(galleryItems1);
+
+                if (mainViewOperations != null)
+                    mainViewOperations.notifyData(flickrPhotoObjects);
             }
         }
     }
